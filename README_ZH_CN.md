@@ -270,8 +270,8 @@ result     结果
 **例子**
 ```
 {
-    “orderId”: “d0c5340b-6d6c-49d9-b567-48c4bfca13d2",
-    "result": false
+    “orderId”: 201912,
+    "result": true
 }
 ```
 参数名	描述

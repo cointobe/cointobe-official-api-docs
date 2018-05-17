@@ -99,11 +99,15 @@ HTTP状态码200表示成功响应，并可能包含内容。如果响应含有�
 
 **常见错误码**
 
-400 Bad Request – Invalid request forma 请求格式无效
-401 Unauthorized – Invalid API Key 无效的API Key
-403 Forbidden – You do not have access to the requested resource 请求无权限
-404 Not Found 没有找到请求
-500 Internal Server Error – We had a problem with our server 服务器内部阻碍
+* 400 Bad Request – Invalid request forma 请求格式无效
+
+* 401 Unauthorized – Invalid API Key 无效的API Key
+
+* 403 Forbidden – You do not have access to the requested resource 请求无权限
+
+* 404 Not Found 没有找到请求
+
+* 500 Internal Server Error – We had a problem with our server 服务器内部阻碍
 
 ### 分页
 

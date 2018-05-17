@@ -1,706 +1,659 @@
-CoinToBe交易所官方API文档
-================================================================
+# CoinToBe交易所官方API文档
+
 # 介绍
-######  
-欢迎使用CoinToBe开发者文档。此文档提供了账户管理、行情查询、交易功能等相关API。API分为账户、交易和行情三类。账户和交易API需要身份验证，提供下单、撤单，查询订单和帐户信息等功能。行情API提供市场的行情数据，所有行情接口都是公开的。
 
+欢迎使用CoinToBe开发者文档。
 
-# 概述
-###### 
-市场概况和基础信息
+本文档提供了现货(Spot)业务的账户管理、行情查询、交易功能等相关API的使用方法介绍。
+行情API提供市场的公开的行情数据接口，账户和交易API需要身份验证，提供下单、撤单，查询订单和帐户信息等功能。
 
-  ### 撮合引擎
-  ###### 
-  撮合系统撮合订单的优先级按照价格优于时间的优先级来撮合，优先撮合价格更有优势的订单。当价格一致时按照下单时间顺序撮合，先下单的先撮合。比如深度列表中目前有3笔挂单等待成交，分别为1: 14900美金买1个比特币，2: 15000美金买2个比特币，3: 14900美金买1.5个比特币。他们是按时间顺序1-2-3进入撮合系统的，根据价格优先，系统优先撮合订单2，根据时间优先，1跟3优先撮合1。所以系统撮合顺序是2-1-3。
-  
-  #### 成交价说明
-  ######
-   订单撮合时成交价将按maker挂单价格成交，而非taker吃单价格。
-例如：A用户在10000美元挂了1个BTC的买单，然后B用户以8000美元的价格下了一个卖单，因为A用户的订单先进入撮合系统挂在深度列表上，所以以A的价格为准，最终这笔订单最终以10000美元成交。
-#### 订单生命周期
-###### 
-   订单进入撮合引擎后是“未成交”状态；如果一个订单被撮合而全部成交，那么他会变成“已成交”状态；一个订单被撮合可能出现部分成交，那么他的状态会变成“部分成交”状态，并且继续留在撮合队列中进行撮合；一个留在撮合队伍中等待撮合的订单被撤销，那么他的状态会变成“已撤销”状态；发起撤消到完成撤消的过程中有一个过程状态“撤单中”；被撤消或者全部成交的订单将被从撮合队列中剔除。
-   
-#### 币币交易限价规则
-###### 
-   为了防止用户下错大单造成市场异常波动和个人资金损失，币币交易设置了FOK限价规则：如果用户在币币交易所下的市价单/限价单可以与当前买卖盘内订单直接成交，那么系统会判断成交深度对应的价格与同方向盘口价的偏差是否超出30%。如果超过，则此订单将被系统立即全数撤销，否则此订单正常进行撮合。
-例如：某用户在XRP/BTC交易区下了100BTC的市价买单(此时卖一价为0.00012)，系统判断订单完成成交后最新成交价为0.0002。此时，(0.0002-0.00012)/0.00012=66.7%>30%，用户的这笔市价买单将被立即撤销，不会和买卖盘内订单进行撮合。
+# 开始使用    
+REST，即Representational State Transfer的缩写，是一种流行的互联网传输架构。它具有结构清晰、符合标准、易于理解、扩展方便的，正得到越来越多网站的采用。其优点如下：
 
-### 费用
-#### 交易费用
-###### 
-采用maker-taker收费规则，为鼓励挂单，maker挂单成交的手续费会比taker吃单成交的手续费低。同时，为鼓励成交，CTB会针对成交量大的客户采取手续费返还政策，详情请联系平台客服。
+    在RESTful架构中，每一个URL代表一种资源；
+    客户端和服务器之间，传递这种资源的某种表现层；
+    客户端通过四个HTTP指令，对服务器端资源进行操作，实现“表现层状态转化”。
 
+建议开发者使用REST API进行币币交易或者资产提现等操作。
 
+# API接口加密验证
+## 生成API Key
 
+在对任何请求进行签名之前，您必须通过 Cointobe 网站【用户中心】-【API】创建一个API key。 创建key后，您将获得2个必须记住的信息：
+* API Key
 
-# API
-###### 
-REST API提供账户管理、行情查询和交易功能。
-同时提供了WebSocket API，订阅WebSocket可以获取行情数据的推送。
+* Secret
+
+API Key 和 Secret 将由随机生成和提供。
+
+## 发起请求
+
+所有REST请求都必须包含以下标题：
+
+* ACCESS-KEY api key作为一个字符串。
+* ACCESS-SIGN 使用base64编码签名（请参阅签名消息）。
+* ACCESS-TIMESTAMP 作为您的请求的时间戳。
+* ACCESS-PASSPHRASE 您在创建API密钥时指定的密码。
+* 所有请求都应该含有application/json类型内容，并且是有效的JSON。
+
+## 签名
+
+该 ACCESS-SIGN 标头是通过使用在 prehash 字符串 BASE64 解码秘密密钥创建 HMAC SHA256 生成 timestamp + method + requestPath + body（ 其中，+ 表示字符串连接 ）和 BASE64 编码的输出。时间戳值与CB-ACCESS-TIMESTAMP标题相同。 这 body 是请求主体字符串或省略，如果没有请求正文（通常为 GET 请求）。**method 应该是大写**。
+
+请记住，在将其用作 HMAC 的密钥之前，首先对64位字母数字密码字符串进行 base64 解码（ 结果为 64 个字节 ）。另外，在发送头部之前，对摘要输出进行 base64 编码。
+
+用户提交的参数除 sign 外，都要参与签名。 首先，将待签名字符串要求按照参数名进行排序 ( 首先比较所有参数名的第一个字母，按 abcd 顺序排列，若遇到相同首字母，则看第二个字母，以此类推 )。
+
+**例如：对于如下的参数进行签名**
+
+```java
+string[] parameters = {
+    "api_key=c821db84-6fbd-11e4-a9e3-c86000d26d7c",
+    "symbol=btc_cny",
+    "type=buy",
+    "price=680",
+    "amount=1.0"
+};
+```
+
+生成待签名的字符串 
+```
+amount=1.0&api_key=c821db84-6fbd-11e4-a9e3-c86000d26d7c&price=680&symbol=btc_cny&type=buy
+```
+
+然后，将待签名字符串添加私钥参数生成最终待签名字符串。
+
+例如：
+```
+amount=1.0&api_key=c821db84-6fbd-11e4-a9e3-c86000d26d7c&price=680&symbol=btc_cny&type=buy&secret_key=secretKey
+```
+
+注意，`"&secret_key=secretKey"` 为签名必传参数。
+最后，是利用32位MD5算法，对最终待签名字符串进行签名运算，从而得到签名结果字符串(该字符串赋值于参数sign)，MD5计算结果中字母全部大写。
+
+## 选择时间戳 
+
+该 ACCESS-TIMESTAMP 头必须是从UTC的时间的Unix Epoch开始的秒数。十进制值是允许的。 您的时间戳必须在api服务时间的30秒内，否则您的请求将被视为过期并被拒绝。如果您认为服务器和API服务器之间存在较大的时间偏差，那么我们建议您使用时间点来查询API服务器时间。
+
+## 请求交互  
+
+REST访问的根URL：`http://www.cointobe.vip`
 
 ### 请求
-######
-所有请求基于Https协议，请求头信息中contentType 需要统一设置为:'application/x-www-form-urlencoded’。 
 
-请求交互说明
+所有请求基于Https协议，请求头信息中Content-Type 需要统一设置为:'application/json’。
+
+**请求交互说明**
 
 1、请求参数：根据接口请求参数规定进行参数封装。
 
-2、提交请求参数：将封装好的请求参数通过POST或GET等方式提交至服务器。
+2、提交请求参数：将封装好的请求参数通过POST/GET/DELETE等方式提交至服务器。
 
 3、服务器响应：服务器首先对用户请求数据进行参数安全校验，通过校验后根据业务逻辑将响应数据以JSON格式返回给用户。
 
 4、数据处理：对服务器响应数据进行处理。
 
-#### 错误
-######
-除非特殊说明，错误请求都通过HTTP 4xx或者状态码进行返回，返回内容还将包含错误原因、参数信息。您的HTTP库应配置为非2xx请求提供消息主体，以便您可以从主体读取消息字段。
-#### 常见错误码
-######
-400	Bad Request – Invalid request format
+**成功**
 
-401	Unauthorized – Invalid API Key
-
-403	Forbidden – You do not have access to the requested resource
-
-404	Not Found
-
-500	Internal Server Error – We had a problem with our server
-
-#### 成功
-######
 HTTP状态码200表示成功响应，并可能包含内容。如果响应含有内容，则将显示在相应的返回内容里面。
 
+**常见错误码**
+
+400 Bad Request – Invalid request forma 请求格式无效
+401 Unauthorized – Invalid API Key 无效的API Key
+403 Forbidden – You do not have access to the requested resource 请求无权限
+404 Not Found 没有找到请求
+500 Internal Server Error – We had a problem with our server 服务器内部阻碍
+
 ### 分页
-######
-所有返回数据集的REST请求使用游标分页。游标分页允许在结果的当前页面之前和之后获取结果，并且非常适合于实时数据。像/depth(深度信息)/fills(成交信息)/candles(kline)/tickers(行情信息)/这样默认返回最新内容的请求。根据当前的返回结果，后续请求可以在他的基础之上指定请求数据的方向，可以请求在这之前的，也可以请求在这之后的数据。
-before和after游标可通过响应头CB-BEFORE和CB-AFTER使用。在请求初始请求页面时，请求应使用这些游标值。
-#### 参数
-######
-Parameter	Default	Description
 
-before		Request page before (newer) this pagination id.
-
-after		Request page after (older) this pagination id.
-
-limit	100	Number of results per request. Maximum 100. (default 100)
-
-#### 例子
-######
-GET /orders?before=2&limit=30
-
-### 标准规范
-#### 时间戳
-######
-除非另外指定，API中的所有时间戳均以微秒为单位返回。
-##### 例子  1524801032573
-#### 数字
-######
-为了保持跨平台时精度的完整性，十进制数字作为字符串返回。建议您在发起请求时也将数字转换为字符串以避免截断和精度错误。
-整数（如交易编号和顺序）不加引号。
-#### ID
-######
-除非另有说明，大多数标识符是UUID。当提出一个需要UUID的请求时，以下两个形式（有和没有破折号）都被接受。
-132fb6ae-456b-4654-b4e0-d681ac05cea1 或者132fb6ae456b4654b4e0d681ac05cea1
-
-我们也要支持用户下单时可以传一个符合我们规范的uuid给我们
-
-### 访问限制
-#### REST API
-######
-公共接口：我们通过IP限制公共接口的调用：每秒3个请求，每秒最多6个请求。
-私人接口：我们通过用户ID限制私人接口的调用：每秒5个请求，每秒最多10个请求。
-
-某些接口的特殊限制在具体的接口上注明
-#### Websocket API 
-######
-Websocket API将每个命令类型（例如：NewOrderSingle，OrderCancelRequest）限制为每秒50条命令。
-### 验证
-######
-#### 生成API Key
-######
-在对任何请求进行签名之前，您必须通过网站创建一个API key。创建key后，您将获得2个必须记住的信息：
-
-API Key
-
-Secret
-
-API Key和Secret将由随机生成和提供。
-
-#### 发起请求
-######
-所有REST请求都必须包含以下标题：
-
-ACCESS-KEY api key作为一个字符串。
-
-ACCESS-SIGN 使用base64编码签名（请参阅签名消息）。
-
-ACCESS-TIMESTAMP 作为您的请求的时间戳。
-
-ACCESS-PASSPHRASE 您在创建API密钥时指定的密码。
-
-所有请求都应该含有application/json类型内容，并且是有效的JSON。
-#### 签名
-
-该ACCESS-SIGN标头是通过使用在prehash字符串BASE64解码秘密密钥创建HMAC SHA256生成timestamp + method + requestPath + body（其中，+表示字符串连接）和BASE64编码的输出。时间戳值与CB-ACCESS-TIMESTAMP标题相同。
-这body是请求主体字符串或省略，如果没有请求正文（通常为GET请求）。
-本method应该是大写。
-请记住，在将其用作HMAC的密钥之前，首先对64位字母数字密码字符串进行base64解码（结果为64个字节）。另外，在发送头部之前，对摘要输出进行base64编码。
-
-
-用户提交的参数除sign外，都要参与签名。
-首先，将待签名字符串要求按照参数名进行排序(首先比较所有参数名的第一个字母，按abcd顺序排列，若遇到相同首字母，则看第二个字母，以此类推)。
-例如：对于如下的参数进行签名
-string[] parameters={"api_key=c821db84-6fbd-11e4-a9e3-c86000d26d7c","symbol=btc_cny","type=buy","price=680","amount=1.0"}; 生成待签名的字符串 amount=1.0&api_key=c821db84-6fbd-11e4-a9e3-c86000d26d7c&price=680&symbol=btc_cny&type=buy
-然后，将待签名字符串添加私钥参数生成最终待签名字符串。
-例如：
-amount=1.0&api_key=c821db84-6fbd-11e4-a9e3-c86000d26d7c&price=680&symbol=btc_cny&type=buy&secret_key=secretKey
-注意，"&secret_key=secretKey"为签名必传参数。
-最后，是利用32位MD5算法，对最终待签名字符串进行签名运算，从而得到签名结果字符串(该字符串赋值于参数sign)，MD5计算结果中字母全部大写。
-
-#### 选择时间戳
-#####
-该ACCESS-TIMESTAMP头必须是从UTC的时间的Unix Epoch开始的秒数。十进制值是允许的。
-您的时间戳必须在api服务时间的30秒内，否则您的请求将被视为过期并被拒绝。如果您认为服务器和API服务器之间存在较大的时间偏差，那么我们建议您使用时间点来查询API服务器时间。
-######
-签名时间和服务器时间差30秒的请求将被系统拒绝
-
-
-# 账户API
-
-#### 管理主账户在交易账户(币币交易)
-
-# 币币API
-获取币币交易的行情信息，账户信息，订单操作，订单查询，账单明细查询
-
-## 私有API
-私有接口可用于订单管理和账户管理。每个私有请求必须使用规范的验证形式进行签名。
-私有接口需要使用您的API  key进行验证。您可以在这里生成API key。
-
-## 币币账户
-## 账户余额列表
-获取币币交易账户余额列表，查询各币种的余额，冻结和可用情况
-### HTTP请求
-``GET /api/v1/spot/accounts``
-### 返回参数
-参数名	描述
-
-account_id  账户ID
-
-currency	账户币种
-
-balance	  帐户中总的币数量
-
-frozen	资金被占用
-
-available	可用于提现或交易的资金
-
-*例子*：
-
-Field	Description
-
-account_id	Account ID
-
-currency	the currency of the account
-
-balance	total funds in the account
-
-Frozen	funds on hold (not available for use)
-
-available	funds available to withdraw* or trade
-
-### 冻结说明
-
-当你下单的时候，订单所需的资金将被冻结。这部分资金将不能被用于其他订单或者提现。资金将一直被冻结直至订单被成交或者取消。
-
-## 订单
-
-### 下单
-提供limit和market订单模式。只有当您的账户有足够的资金才能下单。一旦下订单，您的账户资金将在订单生命周期期间被冻结。什么币种以及多少资金被冻结取决于订单指定的类型和参数。
-
-### HTTP请求
-``POST /api/v1/spot/orders``
-
-### 通用参数
-参数	描述
-
-client_oid	[可选]由您设置的订单ID来识别您的订单
-
-type	[可选] limit，market（默认是limit）
-
-side	buy or sell
-
-Code	有效的交易币对,eg:ltc_btc
-
-*例子:*
-
-Param	Description
-
-client_oid	[optional] Order ID selected by you to identify your order
-
-type	[optional] limit, or market (default is limit)
-
-side	buy or sell
-
-Code	A valid product id
-
-## 限价单特殊参数
-参数	描述
-
-price	每个币的价格
-
-size	买入或卖出的币的数量
-
-*例子*
-
-Param	Description
-
-price	Price per bitcoin
-
-size	Amount of BTC to buy or sell
-
-### 返回参数
-参数名	描述
-
-orderId	订单ID
-
-result     结果
+所有返回数据集的REST请求支持使用游标分页。
+游标分页允许在结果的当前页面之前和之后获取结果，并且非常适合于实时数据。根据当前的返回结果，后续请求可以在此基础之上指定请求数据的方向，可以请求在这之前和之后的数据。before和after游标可通过响应头CB-BEFORE和CB-AFTER使用。
 
 **例子**
-```
-{
-    “orderId”: 201912,
-    "result": true
-}
-```
-参数名	描述
 
-orderId	订单ID
+`GET /orders?before=2&limit=30`
 
-price     每个币的价格
+## 标准规范
 
-size	订单包含的币的数量
+### 时间戳
 
-Code   交易对ID
+除非另外指定，API中的所有时间戳均以微秒为单位返回。
 
-side   订单方向
+### 例子
 
-type  订单类型
+1524801032573
 
-filledVolume    成交数量
+### 数字
 
-status   订单状态
+为了保持跨平台时精度的完整性，十进制数字作为字符串返回。建议您在发起请求时也将数字转换为字符串以避免截断和精度错误。 整数（如交易编号和顺序）不加引号。
 
-### 解释说明
+## 访问限制
 
-Code
-必须与有效的交易对相匹配。交易对列表可通过 `/products` 接口获得。
+### REST API
 
-type
-下订单时，您可以指定订单类型。您指定的订单类型将影响是否需要其他订单参数以及撮合引擎如何执行您的订单。如果type没有指定，订单将默认为一个limit订单。
-限价单既是默认订单类型，也是基本订单类型。限价单需要指定一个price和size。该size是数字货币买入或卖出的数量，price表示每个数字货币的价格。限价单将按指定价格或更好的价格成交。根据市场条件，卖单可以按照指定价格或者更高价格来成交，买单可以按照指定价格或更低价格成交。如果不能立即成交，那么限价单将成为深度列表里的一部分，直到被另一个新进来的订单成交或被用户撤单。
-市价单不同于限价单，因为它们不提供价格保证。然而，他确实提供了一种不必指定价格，而以固定数量的数字货币或计价货币进行购买或出售的方式。市价单下单后会立即撮合，而不会把他挂在深度列表上。市价单总是takers并承担费用。在下达市价单时，您可以指定计价货币或交易货币的数量。计价货币数量决定账户余额的使用量，交易币种数量决定交易币种的交易量。
+* 公共接口：我们通过IP限制公共接口的调用：每2秒最6个请求。
 
-**PRICE**
+* 私人接口：我们通过用户ID限制私人接口的调用：每2秒最多6个请求。
 
-价格必须以quote_increment计价单位为准。计价单位是价格的最小单位。对于BTC-USDT产品，最小单位为0.0001。低于0.0001将不被接受。市价单不需要。
+* 某些接口的特殊限制在具体的接口上注明
 
-**SIZE**
-数量必须大于base_min_size，不得大于base_max_size。数量可以是交易币种最小单位（BTC-USDT交易对的BTC）的任何倍数，其中包括satoshi单位。size表示买入或卖出BTC（或交易货币）的数量。
+# API参考
 
-**FUNDS**
+## 币币行情 API
 
-金额字段可选用于市价单。指定时，表示有相应计价货币的产品要买入。例如，BTC-USD交易时市价单指定150USD表示将将花150 USD购买BTC（包括所有费用）。
+1.  获取所有币对列表
 
-**FROZEN**
+    **HTTP请求**
 
-对于限价买单，我们将冻结价格 x 数量 x (1 + 费率)计价货币的数量。对于卖单，我们将冻结你想卖的交易币种的数量。实际费用在交易时进行评估。如果您取消部分成交或未成交的订单，剩余资金将被解除冻结。
-对于指定的金额的市价买单，这部分金额将被冻结。对于一个卖单，指定数量的交易币种将被冻结。
-
-
-订单生命周期
-
-HTTP请求将在订单被拒绝（资金不足，参数无效等）或下单成功（由匹配引擎接受）时作出响应。一个200响应表示该订单被接收并且进入撮合。进入撮合的订单可以部分或全部立即成交（取决于价格和市场条件）。部分成交的时候将把订单的剩余数量进行持续撮合。完全成交的订单将进入已成交状态。
-
-鼓励监听市场数据流的用户使用client_oid字段以便在接受到的信息中标识对应的数据。
-
-响应
-
-一个成功接受的订单将被分配一个订单ID。成功接受的订单指的是撮合引擎已经接受的订单。
-
-未成交的订单不会过期，并将保持撮合状态，直到被成交或取消。
-
-
-### 撤销订单
-
-撤销之前下的订单。
-如果订单在其生命周期内没有任何成交，则其记录可能被清除。这意味着订单详细信息将不可用GET /orders/<order-id>来获取。
-
-### HTTP请求
- 
-``DELETE /api/v1/spot/orders/<orderId>``
- 
-### 查询参数
-
-参数名		描述
-
-Code	[可选的]	只取消对应交易对的订单
-
-### 返回值
-
-返回值 status=200 表示成功
-
-
-### 批量撤销
-
-撤销所有未完成订单。返回被撤销订单的列表。最多撤销50个订单。无法保证一定撤销成功。
-
-### HTTP请求
-
-``DELETE /api/v1/spot/orders``
-
-### 查询参数
-
-参数名		描述
-
-Code	[可选的]	只取消对应交易对的订单
-
-### 返回值
-
-返回值 status=200 表示成功
-
-### 获取历史列表
-
-获取历史订单，状态为：已完成，已撤销，撤销中的订单，只获取前2天的这个请求支持分页。
-### HTTP请求
-
-``GET /api/v1/spot/orders``
-### 查询参数
-
-参数		描述
-
-status		仅限这些状态的订单列表。通过all返回所有这些状态的订单
-
-Code	[可选的]	只列出特定交易对的订单
-
-status：等待成交、部分成交、撤单中、已成交、撤单
-
-前三个在order表，后两个在finish表
-
-*例子*:
-
-Param		Description
-
-status		Limit list of orders to these statuses. Passing all returns orders of all statuses.
-
-product_id	[optional]	Only list orders for a specific product
-
-### 返回参数
-
-参数名	描述
-
-orderId	订单ID
-
-price      每个币的价格
-
-size	订单包含的币的数量
-
-Code 
-
-side
-
-type
-
-createdDate
-
-filledVolume
-
-status:open|partially-filled|filled|cancel|canceled,#成交状态（未成交，部分成交,完全成交，撤单中，已撤单）
-
-*例子*：
-```
-[
-    {
-        "orderId":2222,
-        "price": "0.10000000",
-        "size": "0.01000000",
-        "code": "BTC-USD",
-        "side": "buy",
-        "type": “limit",
-        “createdDate": "2016-12-08T20:02:28.53864Z",
-        “filledVolume": "0.00000000",
-       "status": "open"
-    },
-    {
-      “orderId":11111",
-      "size": "1.00000000",
-      "code": "BTC-USD",
-      "side": “sell",
-      "type": "market",
-      "createdDate": "2016-12-08T20:09:05.508883Z",
-      “filledVolume": “1.00000000",
-      "status": “filled"
-     }
-]
-```
-
-### 解释说明
-
-订单状态和结算：
-订单完成后，将不再放在深度列表中。已完成和结算已状态之间有一个小窗口期。当所有的交易已经结算，并且剩下的冻结资金（如果有的话）已经被释放的时候，订单就被结算了。
-
-轮询：
-对于大批量交易，强烈建议您维护自己的未成交委托订单列表，并使用其中一个流数据市场数据馈送来更新。开始交易时，您应该轮询订单，以获取任何未成交委托单的当前状态。
-
-executedValue 是累计成交的 数量 * 价格。
-未成交的订单可能会根据市场情况在你发起请求和服务器响应之间改变状态。
-
-### 获取订单
-
-通过订单ID获取单个订单。
-#### HTTP请求
-
-```GET /api/v1/spot/orders/<orderId>```
-#### 返回参数
-
-参数名	描述
-
-ID	订单ID
-
-price      每个币的价格
-
-size	订单包含的币的数量
-
-Code
-
-side
-
-type
-
-createdDate
-
-filledVolume
-
-status
-
-*例子*：
-```
-{
-    “orderId”:2222222,
-    "price": "10000.0000",
-    "code": "BTC-USD",
-    "side": “buy",
-    "type": "market",
-    "createdDate": "2016-12-08T20:09:05.508883Z",
-    "filledVolume": "0.1291771",
-    "status": “filled"
-}
-```
-### 解释说明
-
-如果订单被取消，则响应可能因为没有相应的匹配而返回状态码404。
-
-未成交的订单可能会根据市场情况在发起请求和响应之间改变状态。
-done_reason表示订单的结束的原因，filled表示因为完全成交而结束，cancelled表示因为撤销而结束
-
-## 交易对
-### 获取交易对列表
-获取交易可用交易对的列表。
-
-  #### HTTP请求
-
-```  GET /api/v1/spot/public/product ```
-  #### 返回参数
-```
-   [
-    {
-        “code": "BTC-USD",
-        "base_currency": "BTC",
-        "quote_currency": "USD",
-        "base_min_size": "0.01",
-        "base_max_size": “100000.00",
-        "quote_increment": "0.01"
-    }
-  ]
-```
-  #### 解释说明
-  base_min_size和base_max_size字段定义了委托下单的最小和最大值。quote_increment字段指定委托下单的最小计价单位。
-委托价格必须是最小单位的倍数（即如果最小单位为0.01，委托价格为0.001或0.021将被拒绝）。
-一旦分配，交易对ID将不会更改，但将来最小值/最大值/最小单位可能会更改。
-
-### 获取交易深度
-  获取交易对的深度列表。显示的深度数量可以用level参数自定义。
-  默认情况下，只返回盘口的（即最佳的）卖价和买价。相当于卖一价和买一价。如果您想查看较大的深度，请指定level查询参数。
-  如果价格没有合并，那么将返回每个价格的订单。合并深度的话每个价格区间将只返回一个数量（就像在该价格区间上只有一个订单一样）。
-
-  #### HTTP请求
- ``` GET /api/v1/spot/public/products/<code>/orderbook```
-
-  #### 查询参数
-  名称	默认	描述
-
-  level	1	选择返回详情。每个等级如下
-
-  范围	描述
-
-  1	只有最好的卖价和买价
-
-  2	前50个卖价和买价（合并之后的深度）
-
-  3	全深度（不合并深度）
-
-  1和2是合并之后的深度并返回每个价格的订单数量。范围3是不合并的深度，并返回整个订单。
-
-  #### 返回值
-  
-  示例对/ products / BTC-USD / orderbook的响应只返回最佳买价和卖价:
-
-```
-  {
-      "bids": [
-          [ price, size ],
-      ],
-      "asks": [
-          [ price, size],
-      ]
-  }
-```
-
-  #### 解释说明
-  这个请求不支持分页。一个返回值中返回整个深度列表。
-  1和2推荐进行轮询。想要最及时的数据，请考虑使用websocket。
-  对于希望使用websocket维护完整的实时订单的用户，建议使用范围3。滥用范围3轮询将导致您的访问被限制或暂停。
-
-### 获取ticker
-  #### HTTP请求
-
-  最新成交、买一价/卖一价和24小时交易量的快照信息。
-
-  #### 查询参数
-  #### 返回值
-  #### 没有size
-  #### time,high,low,last,volume
-  
-  ```
-  [
-      1524801032573,
-      "10",
-      "0.00329999",
-      "0.00329999",
-      "259.60755538"
-  ]
- ```
-  #### 解释说明
-
-### 获取交易
-
-列出交易对的最新交易。这个请求支持分页。
-  #### HTTP请求
-  ``GET /api/v1/spot/public /products/`<code>`/fills``
-
-  #### 查询参数
-
-  参数	描述
-
-  #### 返回值
-
-  price,volume,side,time,order_id:
-
-  ```
-  [
+    ```http
+    # Request
+    GET /spot/public/products
+    ```
+    ```javascript
+    # Response
     [
-        "0.00329999",
-        "10.99999999",
-        "buy",
-        1524801032573,
-        64
-    ],
-    [
-        "10",
-        "0.02521534",
-        "sell",
-        1524801032573,
-        62
+        {
+            "baseCurrency":"LTC",
+            "baseMaxSize":"100000.00",
+            "baseMinSize":"0.001",
+            "code":"LTC_BTC",
+            "quoteCurrency":"BTC",
+            "quoteIncrement":"0"
+        },
+        {	"baseCurrency":"ETH",
+            "baseMaxSize":"100000.00",
+            "baseMinSize":"0.001",
+            "code":"ETH_BTC",
+            "quoteCurrency":"BTC",
+            "quoteIncrement":"0"
+        },
+        ...
     ]
-  ]
-  ```
+    ```
 
-  ##### 解释说明
+    返回值说明
 
-  交易side表示maker下单方向。maker订单表示挂在深度列表上的订单，buy表示价格下跌，因为maker是买单，maker的买单被吃掉，所以价格忘下走。相反，sell表示上涨。
+    | code            | 币对代码       |
+    | - | - |
+    | base_currency   | 基础币 |
+    | quote_currency  | 计价币 |
+    | base_min_size   | 最小交易量 |
+    | base_max_size   | 最大交易量 |
+    | quote_increment | 最小报价单位 |
 
-#### 获取K线数据
+2. 获取币对交易深度
 
-  ##### HTTP请求
-``GET /api/v1/spot/time``
+    获取币对盘口深度的请求列表。
 
-  ##### 查询参数
-  参数	描述
+    **HTTP请求**
 
-  start	在ISO 8601开始时间
+    ```http
+    # Request
+    GET /spot/public/products/<code>/orderbook
+    ```
+    ```javascript
+    # Response
+    {
+        "asks":[
+            [
+                "10463.3399",
+                "0.0025"
+            ],
+            ...
+        ],
+        "bids":[
+            [
+                "7300.2456",
+                "0.0022"
+            ],
+            ...
+        ]
+    }
+    ```
+    **返回值说明**
 
-  end	在ISO 8601结束时间
+    | asks | 卖方深度 |
+    | ------------- |:-:|
+    | bids | 买方深度 |
 
-  granularity	以秒来计量的时间粒度
+    **请求参数**
 
-  ##### 返回值
+    | 参数名 | 参数类型  | 必填 | 描述 |
+    | ------------- |:--:|:--:|:--:|
+    | Code | String | 是 | 币对, 如 ltc_btc |
 
-  返回内容
+3. 获取币对Ticker
 
-time 开始时间
+    **HTTP请求**
 
-low  最低价格
+    最新成交、买一价、卖一价和 24小时交易量的快照信息。
 
-high 最高价格
+    ```http
+    # Request
+    GET /spot/public/products/<code>/ticker
+    ```
 
-open 开盘价格（第一笔交易）
+    ```javascript
+    # Response
+    [
+        1526268156264,
+        "8749.9604",
+        "8260",
+        "8481",
+        "487.8924"
+    ]
+    ```
 
-close 收盘价格（最后交易）
+    **返回值说明（从上到下按顺序)**
 
-volume 交易量
+    | 时间戳 | 1526268156264 |
+    |--------| :-------------: |
+    | 卖一价 | 8749 |
+    |买一价|8260|
+    |最新成交价|8481|
+    |24h成交量|487.8924|
+    
+    **请求参数**
 
-```  
-  [
-    [ time, low, high, open, close, volume ],
-    [ 1415398768, 0.32, 4.2, 0.35, 4.2, 12.3 ],
-    ...
-  ]
-```
+    |参数名|参数类型|必填|描述|
+    |------|:-:|:---:|:---:|
+    |code|String|是|币对,如 btc_usdt|
+    
+4. 获取币对历史成交记录
 
-  ##### 解释说明
-  K线数据可能不完整。
+    获取所请求交易对的历史成交信息，该请求支持分页。
 
-K线数据不应该轮询调查。如果您需要实时信息，请使用websocket的交易查询和深度查询接口。
+    **HTTP请求**
+    ```http
+    # Request
+    GET /spot/public/products/<code>/fills
+    ```
+    ```javascript
+    # Response
+    [
+        [
+            "0.00329999",
+            "10.99999999",
+            "buy",
+            1524801032573,
+            64
+        ],
+        [
+            "10",
+            "0.02521534",
+            "sell",
+            1524801032573,
+            62
+        ]
+    ]
+    ```
 
-单个请求的最大数据是200个candles。如果您选择的开始/结束时间和粒度将导致超过200个数据，您的请求将被拒绝。如果您希望在更大的时间范围内获取足够精细的数据，则需要使用新的开始/结束范围进行多个请求。
+    **返回值说明（按顺序）**
 
-### 时间
+    |成交价格 |0.00329999|
+    |--------|:-:|
+    |成交量 |10.99999999|
+    |Maker成交方向|Buy|
+    |成交时间戳| 1524801032573|
+    |交易编号| 62|
 
-  #### 获取服务器时间
-  获取API服务器的时间。此接口不需要身份验证。
+    **请求参数**
 
-  ##### HTTP请求
-  ``GET /api/v1/spot/time ``
+    |参数名|参数类型|必填|描述|
+    |-|:---:|:-:|:-:|
+    |code|String|是|币对，如btc_usdt|
 
-  ##### 返回值
-  ```
-  {
-    "iso": "2015-01-07T23:47:25.201Z",
-    "epoch": 1524801032573
-  }
-  ```
+    **解释说明**
 
-  ##### 解释说明
-  该epoch字段表示自Unix Epoch以来的十进制秒数。
+    + 交易方向 side 表示每一笔成交订单中 maker 下单方向,maker 是指将订单挂在订单深度列表上的交易用户，即被动成交方。
+
+    + buy 代表行情下跌，因为 maker 是买单，maker 的买单被成交，所以价格下跌；相反的情况下，sell代表行情上涨，因为此时maker是卖单，卖单被成交，表示上涨。
+
+5. 获取K线数据
+
+    **HTTP请求**
+
+    ```http
+    # Request
+    GET  /spot/public/products/<code>/candles?type=1min&start=start_time&end=end_time
+    ```
+    
+    ```javascript
+    # Response
+    {
+        [ 1415398768, 0.32, 0.42, 0.36, 0.41, 12.3 ]
+        ...
+    }
+    ```
+
+    **返回值说明（按顺序）**
+
+    |K线开始时间戳|1415398768|
+    |-|:-:|:-:|
+    |最低价|0.32|
+    |最高价|0.42|
+    |开盘价（第一笔交易）|0.36|
+    |收盘价（最后一笔交易）|0.41|
+
+    **请求参数**
+    
+    |参数名|参数类型|必填|描述|
+    |-|:-:|:-:|:-:|
+    |code|String|是|币对如btc_usdt|
+    |type|String|是|K线周期类型如1min/1hour/day/week/month|
+    |start|String|是|基于ISO 8601标准的开始时间|
+    |end|String|是|基于ISO 8601标准的结束时间|
+
+6.  获取服务器时间
+
+    获取API服务器的时间的接口。此接口不需要身份验证。
+
+    **HTTP请求**
+    ```http
+    # Request
+    
+    GET /spot/time
+    ```
+    ```javascript
+    # Reponse
+
+    {
+        "iso": "2015-01-07T23:47:25.201Z",
+        "epoch": 1524801032573
+    }
+    ```
+
+    **返回值说明**
+
+    |iso|为iso 8061标准的时间字符串表达的服务器时间|
+    |-|:-:|:-:|
+    |epoch|时间戳形式表达的服务器时间|
+
+        iso：返回值为iso 8061标准的时间字符串
+        epoch：返回值为时间戳
+
+    获取所有可交易币对列表以及币对交易参数的请求接口。
 
 
+## 币币账户 API
+
+1. 获取账户信息
+
+    获取币币交易账户余额列表，查询各币种的余额，冻结和可用情况
+
+    **HTTP请求**
+
+    ```
+    # Request
+    GET /spot/ccex/account/assets
+    ```
+    ```
+    # Response
+    [
+        {
+            "available":"0.1",
+            "balance":"0.1",
+            "currencyCode":"ETH",
+            "frozen":"0",
+            "id":1
+        },
+        {
+            "available":"1",
+            "balance":"1",
+            "currencyCode":"USDT",
+            "frozen":"0",
+            "id":1
+        }
+    ]
+    ```
+
+    **返回值说明**
+
+    |available|可用资金|
+    |-|:-:|
+    |balance|币种数量|
+    |currencyCode|币种代码|
+    |frozen|冻结资金|
+    |id|账户ID|
+
+2. 交易委托
+
+    Cointobe 提供限价和市价两种订单类型。
+
+    **HTTP请求**
+    ```
+    # Request
+
+    POST /spot/ccex/orders
+    ```
+
+    ```javascript
+    # Response
+
+    {
+        "result": true,
+        "order_id": 123456
+    }
+    ```
+    
+    **返回值说明**
+
+    + orderId: 订单ID
+    + result: 下单结果
+
+    **请求参数**
+
+    |参数名| 参数类型 |必填|描述|
+    |:------:|:----:|:------:|:-----:|:-----:|
+    |code|String|是|币对如btc_usdt|
+    |side|String|是|买入为buy，卖出为sell|
+    |type|String|是|限价委托为limit，市价委托为market
+    |size|String|否|发出限价委托以及市价卖出委托时传递，代表交易币的数量|
+    |price|String|否|发出限价委托时传递，代表币对价格
+    |funds|String|否|发出市价买入委托时传递，代表计价币的数量
 
 
+3. 撤销所有委托
 
+    撤销目标币对下所有未成交委托。
 
+    **HTTP请求**
+    ```
+    # Request
+    DELETE /spot/ ccex/orders
+    ```
+    ```javascript
+    # Response
 
+    { ... }
+    ```
 
+    **请求参数**
 
+    参数名|参数|类型|必填描述
+    -|:-:| :-:| :-:|
+    code|String|是|币对, 如 btc_usdt
 
+4. 按订单撤销委托
+
+    **按照订单id撤销指定订单。**
+
+    **HTTP请求**
+
+    ```http
+    # Request
+    DELETE /spot/ccex/orders/orderId
+    ```
+    ```javascript
+    # Response
+    {...}
+    ```
+
+    **请求参数**
+
+    参数名|参数类型|必填|描述|
+    -|:-:|:-:|:-:|
+    code|String|是|币对,如 btc_usdt|
+    orderId|String|是|需要撤销的未成交委托的id
+
+5. 查询所有订单
+
+    按照订单状态查询所有订单。
+    
+    **HTTP请求**
+
+    ```http   
+    # Request
+    POST /spot/ccex/orders?code=eth_btc&status=open
+    ```
+    ```javascript
+    # Response
+    {
+        "averagePrice":"0",
+        "code":"CHP_ETH",
+        "createdDate":1526299182000,
+        "filledVolume":"0",
+        "funds":"0",
+        "orderId":9865872,
+        "orderType":"limit",
+        "price":"0.00001",
+        "side":"buy",
+        "status":"canceled",
+        "volume":"1"
+    }
+    ```
+
+    **返回值说明**
+
+    averagePrice|订单已成交部分均价，如果未成交则为0|
+    -|:-:|
+    code|币对如btc_usdt
+    createDate|创建订单的时间戳
+    filledVolume|订单已成交数量
+    funds|订单已成交金额
+    orderId|订单代码
+    price|订单委托价
+    side|订单交易方向
+    status|订单状态
+    volume|订单委托数量
+
+    **请求参数**
+
+    参数名 | 参数类型 | 必填 | 描述 |
+    -|:-:|:-:|:-:|
+    code|String|是|币对如btc_usdt
+    status|String|是| 订单状态，﻿open（未成交）、filled（已完成）、canceled（已撤销）、cancel（撤销中）、partially-filled（部分成交）
+
+6. 按id查询订单
+
+    按照订单id查询指定订单。
+
+    **HTTP请求**
+    ```http
+    # Request
+    POST /spot/ccex/orders/﻿9887828?code=chp_eth
+    ```
+    ```javascript
+    # Response 
+    {
+        "averagePrice":"0",
+        "code":"CHP_ETH",
+        "createdDate":9887828,
+        "filledVolume":"0",
+        "funds":"0",
+        "orderId":9865872,
+        "orderType":"limit",
+        "price":"0.00001",
+        "side":"buy",
+        "status":"canceled",
+        "volume":"1"
+    }
+    ```
+
+    **返回值说明**
+
+    averagePrice|订单已成交部分均价，如果未成交则为0|
+    -|:-:|
+    code|币对如btc_usdt
+    createDate|创建订单的时间戳
+    filledVolume|订单已成交数量
+    funds|订单已成交金额
+    orderId|订单代码
+    price|订单委托价
+    side|订单交易方向
+    status|订单状态
+    volume|订单委托数量
+
+    **请求参数**
+    参数名|参数类型|必填|描述
+    -|:-:|:-:|:-:
+    code|String|是|币对，如 btc_usdt
+    orderId|String|是|订单Id
+
+7. 获取账单
+
+    获取币币交易账户账单
+
+    **HTTP请求**
+    ```http
+    # Request
+    GET /spot/ccex/account/assets/eth/ledger
+    ```
+    ```javascript
+    # Response
+    {
+        "amount": "0.00106415",
+        "balance": "0.65106415",
+        "createdDate": 1526290483000,
+        "details": {
+            "orderId":9772566,
+            "productId":"ETH_BTC"
+        },
+        "id": 27826010,
+        "type": "buy"
+    }
+    ```
+
+    **返回值说明**
+
+    amount|账单发生数量|
+    -|:-:
+    balance|账单资产余额
+    createdDate|账单发生时间戳
+    details|账单详情
+    orderId|账单对应订单代码
+    productId|账单对应交易产品代码
+    id|账单代码
+    type|交易类型
+
+    **请求参数**
+
+    参数名|参数类型|必填|描述
+    -|:-:|:-:|:-:|
+    code|String|是|币对, 如 btc_usdt
+
+8. 提现
+
+    提现到钱包地址
+
+    **HTTP请求**
+
+    ```http
+    # Request
+    POST /spot/ccex/account/withdraw
+    ```
+    ```javascript
+    # Response
+    { ... }
+    ```
+
+    **请求参数**
+
+    参数名|参数类型|必填|描述
+    -|:-:|:-:|:-:|
+    currencyCode|String|是|提现币种名称如BTC
+    amount|String|是|提现数量
+    address|String|是|提现地址
+    ```
 

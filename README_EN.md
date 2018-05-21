@@ -152,7 +152,7 @@ In order to maintain the accuracy of cross-platform, decimal numbers are returne
 
     ```http
     # Request
-    GET /spot/public/products
+    GET /api/v1/spot/public/products
     ```
     ```javascript
     # Response
@@ -193,7 +193,7 @@ In order to maintain the accuracy of cross-platform, decimal numbers are returne
 
     ```http
     # Request
-    GET /spot/public/products/<code>/orderbook
+    GET /api/v1/spot/public/products/<code>/orderbook
     ```
     ```javascript
     # Response
@@ -235,7 +235,7 @@ In order to maintain the accuracy of cross-platform, decimal numbers are returne
 
     ```http
     # Request
-    GET /spot/public/products/<code>/ticker
+    GET /api/v1/spot/public/products/<code>/ticker
     ```
 
     ```javascript
@@ -276,7 +276,7 @@ In order to maintain the accuracy of cross-platform, decimal numbers are returne
     **HTTP Request**
     ```http
     # Request
-    GET /spot/public/products/<code>/fills
+    GET /api/v1/spot/public/products/<code>/fills
     ```
     ```javascript
     # Response
@@ -325,7 +325,7 @@ In order to maintain the accuracy of cross-platform, decimal numbers are returne
 
     ```http
     # Request
-    GET  /spot/public/products/<code>/candles?type=1min&start=start_time&end=end_time
+    GET  /api/v1/spot/public/products/<code>/candles?type=1min&start=start_time&end=end_time
     ```
     ```javascript
     # Response
@@ -362,7 +362,7 @@ In order to maintain the accuracy of cross-platform, decimal numbers are returne
     ```http
     # Request
     
-    GET /spot/time
+    GET /api/v1/spot/time
     ```
     
     ```javascript
@@ -395,7 +395,7 @@ In order to maintain the accuracy of cross-platform, decimal numbers are returne
     **HTTP Request**
     ```
     # Request
-    GET /spot/ccex/account/assets
+    GET /api/v1/spot/ccex/account/assets
     ```
     ```
     # Response
@@ -435,7 +435,7 @@ In order to maintain the accuracy of cross-platform, decimal numbers are returne
     ```
     # Request
 
-    POST /spot/ccex/orders
+    POST /api/v1/spot/ccex/orders
     ```
 
     ```javascript
@@ -471,7 +471,7 @@ In order to maintain the accuracy of cross-platform, decimal numbers are returne
     **HTTP Request**
     ```
     # Request
-    DELETE /spot/ ccex/orders
+    DELETE /api/v1/spot/ccex/orders
     ```
     ```javascript
     # Response
@@ -493,7 +493,7 @@ In order to maintain the accuracy of cross-platform, decimal numbers are returne
 
     ```http
     # Request
-    DELETE /spot/ccex/orders/orderId
+    DELETE /api/v1/spot/ccex/orders/orderId
     ```
     ```javascript
     # Response
@@ -515,7 +515,7 @@ In order to maintain the accuracy of cross-platform, decimal numbers are returne
 
     ```http   
     # Request
-    POST /spot/ccex/orders?code=eth_btc&status=open
+    POST /api/v1/spot/ccex/orders?code=eth_btc&status=open
     ```
     ```javascript
     # Response
@@ -563,7 +563,7 @@ In order to maintain the accuracy of cross-platform, decimal numbers are returne
     **HTTP Request**
     ```http
     # Request
-    POST /spot/ccex/orders/9887828?code=chp_eth
+    POST /api/v1/spot/ccex/orders/9887828?code=chp_eth
     ```
     ```javascript
     # Response 
@@ -611,7 +611,7 @@ In order to maintain the accuracy of cross-platform, decimal numbers are returne
     **HTTP Request**
     ```http
     # Request
-    GET /spot/ccex/account/assets/eth/ledger
+    GET /api/v1/spot/ccex/account/assets/eth/ledger
     ```
     ```javascript
     # Response
@@ -654,7 +654,7 @@ In order to maintain the accuracy of cross-platform, decimal numbers are returne
 
     ```http
     # Request
-    POST /spot/ccex/account/withdraw
+    POST /api/v1/spot/ccex/account/withdraw
     ```
     ```javascript
     # Response

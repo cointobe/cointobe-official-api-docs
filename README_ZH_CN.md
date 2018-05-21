@@ -152,7 +152,7 @@ HTTP状态码200表示成功响应，并可能包含内容。如果响应含有�
 
     ```http
     # Request
-    GET /spot/public/products
+    GET /api/v1/spot/public/products
     ```
     ```javascript
     # Response
@@ -195,7 +195,7 @@ HTTP状态码200表示成功响应，并可能包含内容。如果响应含有�
 
     ```http
     # Request
-    GET /spot/public/products/<code>/orderbook
+    GET /api/v1/spot/public/products/<code>/orderbook
     ```
     ```javascript
     # Response
@@ -237,7 +237,7 @@ HTTP状态码200表示成功响应，并可能包含内容。如果响应含有�
 
     ```http
     # Request
-    GET /spot/public/products/<code>/ticker
+    GET /api/v1/spot/public/products/<code>/ticker
     ```
 
     ```javascript
@@ -279,7 +279,7 @@ HTTP状态码200表示成功响应，并可能包含内容。如果响应含有�
     **HTTP请求**
     ```http
     # Request
-    GET /spot/public/products/<code>/fills
+    GET /api/v1/spot/public/products/<code>/fills
     ```
     ```javascript
     # Response
@@ -329,7 +329,7 @@ HTTP状态码200表示成功响应，并可能包含内容。如果响应含有�
 
     ```http
     # Request
-    GET  /spot/public/products/<code>/candles?type=1min&start=start_time&end=end_time
+    GET  /api/v1/spot/public/products/<code>/candles?type=1min&start=start_time&end=end_time
     ```
     
     ```javascript
@@ -367,7 +367,7 @@ HTTP状态码200表示成功响应，并可能包含内容。如果响应含有�
     ```http
     # Request
     
-    GET /spot/time
+    GET /api/v1/spot/time
     ```
     
     ```javascript
@@ -403,7 +403,7 @@ HTTP状态码200表示成功响应，并可能包含内容。如果响应含有�
 
     ```
     # Request
-    GET /spot/ccex/account/assets
+    GET /api/v1/spot/ccex/account/assets
     ```
     ```
     # Response
@@ -443,7 +443,7 @@ HTTP状态码200表示成功响应，并可能包含内容。如果响应含有�
     ```
     # Request
 
-    POST /spot/ccex/orders
+    POST /api/v1/spot/ccex/orders
     ```
 
     ```javascript
@@ -479,7 +479,7 @@ HTTP状态码200表示成功响应，并可能包含内容。如果响应含有�
     **HTTP请求**
     ```
     # Request
-    DELETE /spot/ ccex/orders
+    DELETE /api/v1/spot/ccex/orders
     ```
     ```javascript
     # Response
@@ -501,7 +501,7 @@ HTTP状态码200表示成功响应，并可能包含内容。如果响应含有�
 
     ```http
     # Request
-    DELETE /spot/ccex/orders/orderId
+    DELETE /api/v1/spot/ccex/orders/orderId
     ```
     ```javascript
     # Response
@@ -523,7 +523,7 @@ HTTP状态码200表示成功响应，并可能包含内容。如果响应含有�
 
     ```http   
     # Request
-    POST /spot/ccex/orders?code=eth_btc&status=open
+    POST /api/v1/spot/ccex/orders?code=eth_btc&status=open
     ```
     ```javascript
     # Response
@@ -571,7 +571,7 @@ HTTP状态码200表示成功响应，并可能包含内容。如果响应含有�
     **HTTP请求**
     ```http
     # Request
-    POST /spot/ccex/orders/﻿9887828?code=chp_eth
+    POST /api/v1/spot/ccex/orders/﻿9887828?code=chp_eth
     ```
     ```javascript
     # Response 
@@ -619,7 +619,7 @@ HTTP状态码200表示成功响应，并可能包含内容。如果响应含有�
     **HTTP请求**
     ```http
     # Request
-    GET /spot/ccex/account/assets/eth/ledger
+    GET /api/v1/spot/ccex/account/assets/eth/ledger
     ```
     ```javascript
     # Response
@@ -663,7 +663,7 @@ HTTP状态码200表示成功响应，并可能包含内容。如果响应含有�
 
     ```http
     # Request
-    POST /spot/ccex/account/withdraw
+    POST /api/v1/spot/ccex/account/withdraw
     ```
     ```javascript
     # Response

@@ -242,6 +242,8 @@ In order to maintain the accuracy of cross-platform, decimal numbers are returne
     # Response
     [
         1526268156264,
+        "8823.352",
+        "8121.9873",
         "8749.9604",
         "8260",
         "8481",
@@ -253,7 +255,9 @@ In order to maintain the accuracy of cross-platform, decimal numbers are returne
 
     |Field|Description|
     |--------| :-------: |
-    | timestamp | 1526268156264 |
+    |timestamp | 1526268156264 |
+    | 24hr Highest|8823.352|
+    | 24hr Lowest|8121.9873|
     | ask | 8749 |
     | bid |8260|
     |latest price|8481|

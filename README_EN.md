@@ -135,7 +135,7 @@ In order to maintain the accuracy of cross-platform, decimal numbers are returne
 
 ### REST API
 
-*P ublic interface: We limit the invocation of public interface via IP: up to 6 requests every 2s.
+* Public interface: We limit the invocation of public interface via IP: up to 6 requests every 2s.
 
 * Private interface: We limit the invocation of private interface via user ID: up to 6 requests every 2s.
 

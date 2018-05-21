@@ -386,7 +386,6 @@ In order to maintain the accuracy of cross-platform, decimal numbers are returne
 
 1. Access account information
 
-    获取币币交易账户余额列表，查询各币种的余额，冻结和可用情况
     Access the list of balance, inquiry of coin balances, freezing status and available fund in spot account.
 
     **HTTP Request**
@@ -444,7 +443,7 @@ In order to maintain the accuracy of cross-platform, decimal numbers are returne
     }
     ```
     
-    **返回值说明**
+    **Response Details**
 
     + orderId: Order ID
     + result: the result of the order placed
@@ -480,7 +479,7 @@ In order to maintain the accuracy of cross-platform, decimal numbers are returne
 
     Name|Paramters|Type|Description
     -|:-:| :-:| :-:|
-    code|String|是|币对, 如 btc_usdt
+    code|String|Y|Trading pairs, e.g. btc_usdt
 
 4. Cancel a specified order
 

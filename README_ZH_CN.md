@@ -37,18 +37,19 @@ API Key 和 Secret 将由随机生成和提供。
 * 所有请求都应该含有application/json类型内容，并且是有效的JSON。
 
 ## 签名
+OK-ACCESS-SIGN的请求头是对 **timestamp + method + requestPath + body** 字符串(+表示字符串连接)使用 **HMAC SHA256** 方法加密，通过**BASE64** 编码输出而得到的。其中，timestamp 的值与 OK-ACCESS-TIMESTAMP 请求头相同。
 
-该 ACCESS-SIGN 标头是通过使用在 prehash 字符串 BASE64 解码秘密密钥创建 HMAC SHA256 生成 timestamp + method + requestPath + body（ 其中，+ 表示字符串连接 ）和 BASE64 编码的输出。时间戳值与CB-ACCESS-TIMESTAMP标题相同。 这 body 是请求主体字符串或省略，如果没有请求正文（通常为 GET 请求）。**method 应该是大写**。
-
-请记住，在将其用作 HMAC 的密钥之前，首先对64位字母数字密码字符串进行 base64 解码（ 结果为 64 个字节 ）。另外，在发送头部之前，对摘要输出进行 base64 编码。
-
-用户提交的参数除 sign 外，都要参与签名。 首先，将待签名字符串要求按照参数名进行排序 ( 首先比较所有参数名的第一个字母，按 abcd 顺序排列，若遇到相同首字母，则看第二个字母，以此类推 )。
+* method 是请求方法，字母全部大写。
+* requestPath 是请求接口路径。
+* body 是指请求主体的字符串，如果请求没有主体(通常为GET请求)则body可省略。
 
 **例如：对于如下的参数进行签名**
 
 ```java
-string[] parameters = {
-    "api_key=c821db84-6fbd-11e4-a9e3-c86000d26d7c",
+Timestamp = 1590000000.28
+Method = "/spot/ccex/orders"
+requestPath = "https://www.cointobe.vip/api/v1"
+body = {
     "symbol=btc_cny",
     "type=buy",
     "price=680",
@@ -58,18 +59,20 @@ string[] parameters = {
 
 生成待签名的字符串 
 ```
-amount=1.0&api_key=c821db84-6fbd-11e4-a9e3-c86000d26d7c&price=680&symbol=btc_cny&type=buy
+Message = '1590000000.28/spot/ccex/ordershttps://www.cointobe.vip/api/v1'+body.decode('utf-8')
 ```
 
 然后，将待签名字符串添加私钥参数生成最终待签名字符串。
 
 例如：
 ```
-amount=1.0&api_key=c821db84-6fbd-11e4-a9e3-c86000d26d7c&price=680&symbol=btc_cny&type=buy&secret_key=secretKey
+Signature = hmac(secretkey, Message, SHA256)
 ```
+在使用前需要对于Signature进行base64编码
 
-注意，`"&secret_key=secretKey"` 为签名必传参数。
-最后，是利用32位MD5算法，对最终待签名字符串进行签名运算，从而得到签名结果字符串(该字符串赋值于参数sign)，MD5计算结果中字母全部大写。
+```
+Signature = base64.encode(Signature.digest())
+```
 
 ## 选择时间戳 
 
@@ -233,7 +236,7 @@ HTTP状态码200表示成功响应，并可能包含内容。如果响应含有�
 
     **HTTP请求**
 
-    最新成交、买一价、卖一价和 24小时交易量的快照信息。
+    最新成交、24h最高、24h最低和24h成交量的快照信息。
 
     ```http
     # Request
@@ -243,13 +246,13 @@ HTTP状态码200表示成功响应，并可能包含内容。如果响应含有�
     ```javascript
     # Response
     [
-        1526268156264,
-        "8823.352",
-        "8121.9873",
-        "8749.9604",
-        "8260",
-        "8481",
-        "487.8924"
+        1527066527725,
+        "8275.1844",
+        "7783.8063",
+        "7845.2459",
+        "451.8678",
+        "8249.9494",
+        "7845.2459"
     ]
     ```
 
@@ -261,8 +264,8 @@ HTTP状态码200表示成功响应，并可能包含内容。如果响应含有�
     |时间戳| 1526268156264 |
     |24h 最高|8823.352|
     |24h 最低|8121.9873|
-    |卖一价|8749|
-    |买一价|8260|
+    |24h开盘价|8249.9494|
+    |24h收盘价|7845.2459|
     |最新成交价|8481|
     |24h成交量|487.8924|
     
